@@ -1,27 +1,37 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:todo_application/models/todo.dart';
+import 'package:todo_application/utils/database_helper.dart';
+import 'package:intl/intl.dart';
 
 class TodoDetail extends StatefulWidget {
-  String appBarTitle;
-  TodoDetail(this.appBarTitle);
+  final String appBarTitle;
+  final Todo todo;
+  TodoDetail(this.todo, this.appBarTitle);
 
   @override
   State<StatefulWidget> createState() {
-    return TodoDetailState(this.appBarTitle);
+    return TodoDetailState(this.todo, this.appBarTitle);
   }
 }
 
 class TodoDetailState extends State<TodoDetail> {
   String appBarTitle;
   static var _priorities = ['High', 'Low'];
+  DatabaseHelper helper = DatabaseHelper();
+  Todo todo;
 
   TextEditingController titleController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
 
-  TodoDetailState(this.appBarTitle);
+  TodoDetailState(this.todo, this.appBarTitle);
 
   @override
   Widget build(BuildContext context) {
     TextStyle textStyle = Theme.of(context).textTheme.headline6;
+
+    titleController.text = todo.title;
+    descriptionController.text = todo.description;
 
     return WillPopScope(
         onWillPop: () {
@@ -49,9 +59,10 @@ class TodoDetailState extends State<TodoDetail> {
                       );
                     }).toList(),
                     style: textStyle,
-                    value: 'Low',
+                    value: getPriorityAsString(todo.priority),
                     onChanged: (valueSelectedByUser) {
                       setState(() {
+                        updatePriorityAsInt(valueSelectedByUser);
                         debugPrint('User selected $valueSelectedByUser');
                       });
                     },
@@ -66,6 +77,7 @@ class TodoDetailState extends State<TodoDetail> {
                     style: textStyle,
                     onChanged: (value) {
                       debugPrint('Something changed in title text field');
+                      updateTitle();
                     },
                     decoration: InputDecoration(
                         labelText: 'Title',
@@ -84,6 +96,7 @@ class TodoDetailState extends State<TodoDetail> {
                     style: textStyle,
                     onChanged: (value) {
                       debugPrint('Something changed in description text field');
+                      updateDescription();
                     },
                     decoration: InputDecoration(
                         labelText: 'Description',
@@ -110,6 +123,7 @@ class TodoDetailState extends State<TodoDetail> {
                           onPressed: () {
                             setState(() {
                               debugPrint("save button clicked");
+                              _save();
                             });
                           },
                         ),
@@ -128,6 +142,7 @@ class TodoDetailState extends State<TodoDetail> {
                           onPressed: () {
                             setState(() {
                               debugPrint("Delete button clicked");
+                              _delete();
                             });
                           },
                         ),
@@ -143,7 +158,82 @@ class TodoDetailState extends State<TodoDetail> {
 
   // return null;
   void moveToLastScreen() {
-    Navigator.pop(context);
+    Navigator.pop(context, true);
     debugPrint("back arrow button clicked");
+  }
+
+  // Convert the String priority in the form of integer before saving it to Database
+  void updatePriorityAsInt(String value) {
+    switch (value) {
+      case 'High':
+        todo.priority = 1;
+        break;
+      case 'Low':
+        todo.priority = 2;
+        break;
+    }
+  }
+
+  // Convert int priority to String priority and display it to user in DropDown
+  String getPriorityAsString(int value) {
+    String priority;
+    switch (value) {
+      case 1:
+        priority = _priorities[0]; // 'High'
+        break;
+      case 2:
+        priority = _priorities[1]; // 'Low'
+        break;
+    }
+    return priority;
+  }
+
+  void updateTitle() {
+    todo.title = titleController.text;
+  }
+
+  void updateDescription() {
+    todo.description = descriptionController.text;
+  }
+
+  void _save() async {
+    moveToLastScreen();
+    todo.date = DateFormat.yMMMd().format(DateTime.now());
+    int result;
+    if (todo.id != null) {
+      //case1:update command
+      result = await helper.updateTodo(todo);
+    } else {
+      //case2 insert command
+      result = await helper.insertTodo(todo);
+    }
+    if (result != 0) {
+      _showAlertDialog('Status', 'Todo Saved Succesfully');
+    } else {
+      _showAlertDialog('Status', 'problem saving todo');
+    }
+  }
+
+  void _delete() async {
+    moveToLastScreen();
+
+    if (todo.id == null) {
+      // case 1 user enter delete after clicking the add button
+      _showAlertDialog('Status', 'No Note was deleted');
+    }
+    int result = await helper.deleteTodo(todo.id);
+    if (result != 0) {
+      _showAlertDialog('Status', 'Todo Saved Succesfully');
+    } else {
+      _showAlertDialog('Status', 'problem saving todo');
+    }
+  }
+
+  void _showAlertDialog(String title, String message) {
+    AlertDialog alertDialog = AlertDialog(
+      title: Text(title),
+      content: Text(message),
+    );
+    showDialog(context: context, builder: (_) => alertDialog);
   }
 }

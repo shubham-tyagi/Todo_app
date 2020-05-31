@@ -21,6 +21,7 @@ class TodoListState extends State<TodoList> {
   Widget build(BuildContext context) {
     if (todoList == null) {
       todoList = List<Todo>();
+      updateListView();
     }
     return Scaffold(
       appBar: AppBar(
@@ -30,7 +31,7 @@ class TodoListState extends State<TodoList> {
             icon: Icon(Icons.add),
             onPressed: () {
               debugPrint("add task button tapped");
-              navigateToDetail('Add Todo');
+              navigateToDetail(Todo('', '', 2), 'Add Todo');
             },
           ),
         ],
@@ -69,7 +70,7 @@ class TodoListState extends State<TodoList> {
             ),
             onTap: () {
               debugPrint("Listfile deleted");
-              navigateToDetail('Edit Todo');
+              navigateToDetail(this.todoList[position], 'Edit Todo');
             },
           ),
         );
@@ -111,7 +112,7 @@ class TodoListState extends State<TodoList> {
     int result = await databaseHelper.deleteTodo(todo.id);
     if (result != 0) {
       _showSnackBar(context, 'Todo Deleted Successfully');
-      // updateListView();
+      updateListView();
     }
   }
 
@@ -120,9 +121,26 @@ class TodoListState extends State<TodoList> {
     Scaffold.of(context).showSnackBar(snackBar);
   }
 
-  void navigateToDetail(String title) {
-    Navigator.push(context, MaterialPageRoute(builder: (context) {
-      return TodoDetail(title);
+  void navigateToDetail(Todo todo, String title) async {
+    bool result =
+        await Navigator.push(context, MaterialPageRoute(builder: (context) {
+      return TodoDetail(todo, title);
     }));
+    if (result == true) {
+      updateListView();
+    }
+  }
+
+  void updateListView() {
+    final Future<Database> dbFuture = databaseHelper.initializeDatabase();
+    dbFuture.then((database) {
+      Future<List<Todo>> todoListFuture = databaseHelper.getTodoList();
+      todoListFuture.then((todoList) {
+        setState(() {
+          this.todoList = todoList;
+          this.count = todoList.length;
+        });
+      });
+    });
   }
 }
