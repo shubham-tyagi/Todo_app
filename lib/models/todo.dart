@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/scheduler.dart';
 
 class Todo {
@@ -15,17 +16,18 @@ class Todo {
   String get title => _title;
   String get description => _description;
   int get priority => _priority;
-  String get date => date;
+  String get date => _date;
 
   set title(String newTitle) {
-    if (newTitle.length >= 255) {
+    if (newTitle.length <= 255) {
       this._title = newTitle;
     }
   }
 
   set description(String newDescription) {
-    if (newDescription.length >= 255) {
+    if (newDescription.length <= 255) {
       this._description = newDescription;
+      debugPrint("description set");
     }
   }
 

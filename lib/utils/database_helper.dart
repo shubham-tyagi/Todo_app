@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:sqflite/sqflite.dart';
 import 'dart:async';
 import 'dart:io';
@@ -63,6 +64,7 @@ class DatabaseHelper {
   Future<int> insertTodo(Todo todo) async {
     Database db = await this.database;
     var result = await db.insert(todoTable, todo.toMap());
+    debugPrint("inserted in database");
     return result;
   }
 

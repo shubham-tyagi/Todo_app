@@ -167,6 +167,7 @@ class TodoDetailState extends State<TodoDetail> {
     switch (value) {
       case 'High':
         todo.priority = 1;
+        debugPrint("high priority set");
         break;
       case 'Low':
         todo.priority = 2;
@@ -189,11 +190,14 @@ class TodoDetailState extends State<TodoDetail> {
   }
 
   void updateTitle() {
+    // debugPrint("title update");
     todo.title = titleController.text;
+    debugPrint("title update");
   }
 
   void updateDescription() {
     todo.description = descriptionController.text;
+    debugPrint("desciption update");
   }
 
   void _save() async {
@@ -219,7 +223,7 @@ class TodoDetailState extends State<TodoDetail> {
 
     if (todo.id == null) {
       // case 1 user enter delete after clicking the add button
-      _showAlertDialog('Status', 'No Note was deleted');
+      _showAlertDialog('Status', 'No Todo was deleted');
     }
     int result = await helper.deleteTodo(todo.id);
     if (result != 0) {
